@@ -2,6 +2,32 @@ import * as model from '../models/filmeModel.js';
 
 export const getAll = async (req, res) => {
     try {
+        const { notaMin, duracaoMax, disponibilidade } = req.query;
+
+        if (notaMin !== undefined) {
+            const notaMinNum = parseFloat(notaMin);
+            if (isNaN(notaMinNum) || notaMinNum < 0 || notaMinNum > 10) {
+                return res.status(400).json({
+                    error: 'A nota minima deve ser um número entre 0 e 10.',
+                });
+            }
+        }
+
+        if (duracaoMax !== undefined) {
+            const duracaoMaxNum = parseInt(duracaoMax);
+            if (isNaN(duracaoMaxNum) || duracaoMaxNum <= 0) {
+                return res.status(400).json({
+                    error: 'A duração máxima deve ser um número positivo.',
+                });
+            }
+        }
+
+        if (disponibilidade !== undefined && disponibilidade !== 'true' && disponibilidade !== 'false') {
+            return res.status(400).json({
+                error: 'A disponibilidade deve ser "true" ou "false".',
+            });
+        }
+
         const filme = await model.findAll(req.query);
 
         if (!filme || filme.length === 0) {
@@ -25,7 +51,6 @@ export const create = async (req, res) => {
         }
 
         const { titulo, descricao, duracao, genero, nota } = req.body;
-
 
         if (!titulo || titulo.trim().length < 3) {
             return res
@@ -65,7 +90,6 @@ export const create = async (req, res) => {
         if (nota === undefined || nota === null || nota < 0 || nota > 10) {
             return res.status(400).json({ error: 'A nota (nota) deve estar entre 0 e 10.' });
         }
-
 
         const existeFilme = await model.findAll({ titulo: titulo.trim() });
         if (existeFilme.length > 0) {
@@ -162,7 +186,6 @@ export const remove = async (req, res) => {
             message: 'Filme apagado com sucesso!',
             filmeRemovido: filmeExiste,
         });
-
     } catch (error) {
         console.error('Erro ao deletar:', error);
         res.status(500).json({ error: 'Erro ao deletar filme' });

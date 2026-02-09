@@ -5,16 +5,53 @@ export const create = async (data) => {
 };
 
 export const findAll = async (filters = {}) => {
-    const { titulo, descricao, duracao, genero, nota, avaliacao } = filters;
+    const {
+        titulo,
+        descricao,
+        duracao,
+        genero,
+        nota,
+        avaliacao,
+        title, // Suporte para 'title' (alternativa a 'titulo')
+        genre, // Suporte para 'genre' (alternativa a 'genero')
+        available, // Disponibilidade (alternativa a 'avaliacao')
+        minRating, // Nota mínima
+        maxDuration, // Duração máxima
+    } = filters;
+
     const where = {};
 
-    if (titulo) where.titulo = { contains: titulo, mode: 'insensitive' };
+    // Título (busca parcial, case-insensitive)
+    const tituloFiltro = titulo || title;
+    if (tituloFiltro) where.titulo = { contains: tituloFiltro, mode: 'insensitive' };
+
+    // Descrição
     if (descricao) where.descricao = { contains: descricao, mode: 'insensitive' };
+
+    // Duração (exata)
     if (duracao !== undefined) where.duracao = parseInt(duracao);
-    if (genero) where.genero = { contains: genero, mode: 'insensitive' };
+
+    // Duração máxima
+    if (maxDuration !== undefined) {
+        where.duracao = { ...where.duracao, lte: parseInt(maxDuration) };
+    }
+
+    // Gênero
+    const generoFiltro = genero || genre;
+    if (generoFiltro) where.genero = { contains: generoFiltro, mode: 'insensitive' };
+
+    // Nota (exata)
     if (nota !== undefined) where.nota = parseFloat(nota);
-    if (avaliacao!== undefined) {
-        where.avaliacao= avaliacao=== 'true' || avaliacao === true;
+
+    // Nota mínima
+    if (minRating !== undefined) {
+        where.nota = { ...where.nota, gte: parseFloat(minRating) };
+    }
+
+    // Disponibilidade (avaliacao)
+    const avaliacaoFiltro = available !== undefined ? available : avaliacao;
+    if (avaliacaoFiltro !== undefined) {
+        where.avaliacao = avaliacaoFiltro === 'true' || avaliacaoFiltro === true;
     }
 
     return await prisma.filme.findMany({
